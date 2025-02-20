@@ -36,6 +36,9 @@ dependencies {
     testImplementation("org.springframework.kafka:spring-kafka-test")
     runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // Swagger
+    implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 }
 
 tasks.withType<Test> {
