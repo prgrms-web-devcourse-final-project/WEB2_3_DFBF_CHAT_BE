@@ -150,15 +150,31 @@
 
       // 1) 과거 채팅 메시지 먼저 불러오기 (REST 호출)
       fetch('http://localhost:8080/api/chat/history')
-              .then(response => response.json())
-              .then(messages => {
-                messages.forEach(msg => {
-                  // 과거 메시지를 수신메시지처럼 표기 (혹은 사용자 ID 따라 표시 바꿔도 됨)
-                  // msg 구조: {userId, message, createdAt}
-                  showChatMessage(msg, 'received');
-                });
-              })
-              .catch(console.error);
+        .then(response => {
+          if (response.status === 204) {
+            console.warn('No chat history found (204 No Content)');
+            return [];
+          }
+          return response.json();
+        })
+        .then(messages => {
+          if (!Array.isArray(messages)) {
+            console.warn('No valid chat history received.');
+            return;
+          }
+
+          messages.forEach(msg => {
+            // ✅ `createdAt`이 존재할 때만 변환
+            const formattedDate = msg.createdAt ? new Date(msg.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '시간 없음';
+
+            // ✅ console.log() 대신 console.debug() 사용하여 필요할 때만 활성화
+            console.debug(`[CHAT] ${formattedDate} - ${msg.message}`);
+
+            // ✅ `showChatMessage`에 안전하게 데이터 전달
+            showChatMessage(`${formattedDate} - ${msg.message || '메시지 없음'}`, 'received');
+          });
+        })
+        .catch(error => console.error('Error fetching chat history:', error));
 
       // 2) 이후 /topic/public 구독해서 새 메시지 실시간 수신
       stompClient.subscribe('/topic/public', function(message) {
