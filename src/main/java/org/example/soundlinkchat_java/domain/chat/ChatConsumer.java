@@ -1,19 +1,20 @@
 package org.example.soundlinkchat_java.domain.chat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.soundlinkchat_java.domain.chat.dto.ChatDto;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ChatConsumer {
 
     private final SimpMessagingTemplate simpMessagingTemplate;
-
-    public ChatConsumer(SimpMessagingTemplate simpMessagingTemplate) {
-        this.simpMessagingTemplate = simpMessagingTemplate;
-    }
+    private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "chat-topic",
             groupId = "chat-consumer-group",
@@ -23,8 +24,18 @@ public class ChatConsumer {
             }
     )
     public void consumerChat(String message) {
-        log.info("[좋은말 조아] Received message: {}", message);
-        simpMessagingTemplate.convertAndSend("/topic/public", message);
+        try {
+            ChatDto dto = objectMapper.readValue(message, ChatDto.class);
+            log.info("[1:1 채팅] Received fromUser={}, toUser={}, msg={}",
+                    dto.fromUserId(), dto.toUserId(), dto.message());
+
+            if (dto.toUserId() != null) {
+                simpMessagingTemplate.convertAndSend("/queue/chat-" + dto.toUserId(), dto);
+            }
+
+        } catch (Exception e) {
+            log.error("[ChatConsumer] Failed to process message: {}", e.getMessage());
+        }
     }
 
     @KafkaListener(topics = "bad-word", groupId = "chat-consumer-group")

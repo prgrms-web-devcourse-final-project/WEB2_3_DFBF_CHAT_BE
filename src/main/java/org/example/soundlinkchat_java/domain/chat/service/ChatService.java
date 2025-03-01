@@ -16,19 +16,21 @@ import java.util.List;
 public class ChatService {
     private final ChatRepository chatRepository;
 
-    public void addMessage(ChatDto chatDto) {
+    public ChatDto addMessage(ChatDto chatDto) {
 
-        Date date = Date.from(Instant.now());
+        Date now = Date.from(Instant.now());
         ChatDto chatWithDate = new ChatDto(
-                chatDto.userId(),
+                chatDto.fromUserId(),
+                chatDto.toUserId(),
                 chatDto.message(),
-                date
+                now
         );
         chatRepository.save(chatWithDate);
+        return chatWithDate;
     }
 
-    public List<ChatDto> getChatHistory() {
-        return chatRepository.findChatDtoByUserId(1L);
+    public List<ChatDto> getChatHistoryBetween(Long fromUserId, Long toUserId) {
+        return chatRepository.findByTwoUserIds(fromUserId, toUserId);
     }
 
 }

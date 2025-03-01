@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.soundlinkchat_java.domain.chat.dto.ChatDto;
 import org.example.soundlinkchat_java.domain.chat.service.ChatService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,9 +15,14 @@ import java.util.List;
 public class ChatRestController {
     private final ChatService chatService;
 
-    @GetMapping("/history")
-    public ResponseEntity<List<ChatDto>> getChatHistory() {
-        List<ChatDto> chatHistory = chatService.getChatHistory();
-        return chatHistory != null ? ResponseEntity.ok(chatHistory) : ResponseEntity.noContent().build();
+    @GetMapping("/history/between")
+    public ResponseEntity<List<ChatDto>> getChatHistory(
+            @RequestParam("fromUserId") Long fromUserId,
+            @RequestParam("toUserId") Long toUserId
+    ) {
+        List<ChatDto> chatHistory = chatService.getChatHistoryBetween(fromUserId, toUserId);
+        return chatHistory != null && !chatHistory.isEmpty()
+                ? ResponseEntity.ok(chatHistory)
+                : ResponseEntity.noContent().build();
     }
 }

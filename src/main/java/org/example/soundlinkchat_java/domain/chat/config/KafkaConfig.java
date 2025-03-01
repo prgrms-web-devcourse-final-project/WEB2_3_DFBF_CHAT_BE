@@ -6,6 +6,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
+import org.example.soundlinkchat_java.domain.chat.repositoty.BadWordRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,6 +39,30 @@ public class KafkaConfig {
     }
 
     @Bean
+    public KStream<String, String> notificationStream(StreamsBuilder builder) {
+
+        KStream<String, String> notificationStream = builder.stream(
+                "chat-topic",
+                Consumed.with(Serdes.String(), Serdes.String())
+        );
+
+        KStream<String, String> badWordStream = notificationStream
+                .filter((key, value) -> containsBadWord(value));
+
+        badWordStream.to("bad-word", Produced.with(Serdes.String(), Serdes.String()));
+
+        return badWordStream;
+    }
+
+    private boolean containsBadWord(String message) {
+        if (message == null) {
+            return false;
+        }
+        return BadWordRepository.BAD_WORDS.stream()
+                .anyMatch(message::contains);
+    }
+
+    @Bean
     public KStream<String, String> kStream(StreamsBuilderFactoryBean factoryBean) throws Exception {
 
         KStream<String, String> sourceStream = factoryBean.getObject().stream(
@@ -46,27 +71,12 @@ public class KafkaConfig {
         );
 
         KStream<String, String> transformedStream = sourceStream
-                .mapValues(value -> "다시 만들어진 prefix value : " + value);
+                .mapValues(value -> "알람으로 보낼 value : " + value);
 
         transformedStream.to(
                 "chat-topic-processed",
                 Produced.with(Serdes.String(), Serdes.String())
         );
         return sourceStream;
-    }
-
-
-    // 욕 필터링
-    @Bean
-    public KStream<String, String> notificationStream(StreamsBuilder builder) {
-        KStream<String, String> notificationStream = builder.stream("chat-topic",
-                Consumed.with(Serdes.String(), Serdes.String()));
-
-        KStream<String, String> badWord = notificationStream
-                .filter((key, value) -> value.contains("ㅅㅂ"));
-
-        badWord.to("bad-word", Produced.with(Serdes.String(), Serdes.String()));
-
-        return badWord;
     }
 }
