@@ -138,8 +138,8 @@
 
 <script>
   let accessToken = "YOUR_JWT_TOKEN_HERE";
-  let myUserId = 1;
-  let targetUserId = 2;
+  let myUserId = 2;
+  let targetUserId = 1;
 
   let stompClient = null;
 
@@ -180,7 +180,7 @@
         .catch(error => console.error('Error fetching chat history:', error));
 
       // 2) 내 유저 전용 큐 구독 → 1:1 메시지 받기
-      stompClient.subscribe('/queue/chat-1', function (message) {
+      stompClient.subscribe('/queue/chat-2', function (message) {
         const chat = JSON.parse(message.body);
         showChatMessage(chat.message, 'received');
       });
