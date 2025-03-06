@@ -26,15 +26,11 @@ public class ChatConsumer {
     public void consumerChat(String message) {
         try {
             ChatDto dto = objectMapper.readValue(message, ChatDto.class);
-            log.info("[1:1 채팅] Received fromUser={}, toUser={}, msg={}",
-                    dto.fromUserId(), dto.toUserId(), dto.message());
-
-            if (dto.toUserId() != null) {
-                simpMessagingTemplate.convertAndSend("/queue/chat-" + dto.toUserId(), dto);
+            if (dto.chatRoomId() != null) {
+                simpMessagingTemplate.convertAndSend("/queue/chat-" + dto.chatRoomId(), dto);
             }
-
         } catch (Exception e) {
-            log.error("[ChatConsumer] Failed to process message: {}", e.getMessage());
+            log.error("[ChatConsumer] Failed: {}", e.getMessage());
         }
     }
 
