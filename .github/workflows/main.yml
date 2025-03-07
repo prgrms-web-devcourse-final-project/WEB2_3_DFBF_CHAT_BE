@@ -38,7 +38,7 @@ jobs:
             ./gradlew bootJar
             
             # 파일명 변경
-            mv /home/ubuntu/server/build/libs/SoundLinkChat_Java-0.0.1-SNAPSHOT.jar /home/ubuntu/docker/soundlink.jar
+            mv /home/ubuntu/chat/build/libs/SoundLinkChat_Java-0.0.1-SNAPSHOT.jar /home/ubuntu/docker/soundlink.jar
             
             cd /home/ubuntu/docker
             
