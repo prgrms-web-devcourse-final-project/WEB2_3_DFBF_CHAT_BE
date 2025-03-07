@@ -7,6 +7,6 @@ import org.springframework.data.mongodb.repository.Query;
 import java.util.List;
 
 public interface ChatRepository extends MongoRepository<ChatDto, String> {
-    @Query("{$or: [{'fromUserId': ?0, 'toUserId': ?1}, {'fromUserId': ?1, 'toUserId': ?0}]}")
-    List<ChatDto> findByTwoUserIds(Long fromUserId, Long toUserId);
+    @Query("{ 'chatRoomId': ?0 }")
+    List<ChatDto> findByChatRoomId(String chatRoomId);
 }

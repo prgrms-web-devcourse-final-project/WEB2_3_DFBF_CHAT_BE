@@ -3,10 +3,10 @@ package org.example.soundlinkchat_java.domain.chat.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.soundlinkchat_java.domain.chat.dto.ChatDto;
+import org.example.soundlinkchat_java.domain.chat.dto.ChatResponseDto;
 import org.example.soundlinkchat_java.domain.chat.repositoty.ChatRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -16,21 +16,29 @@ import java.util.List;
 public class ChatService {
     private final ChatRepository chatRepository;
 
-    public ChatDto addMessage(ChatDto chatDto) {
+    public List<ChatResponseDto> getChatHistoryByRoomId(String chatRoomId, Long currentUserId) {
+        List<ChatDto> chatList = chatRepository.findByChatRoomId(chatRoomId);
 
-        Date now = Date.from(Instant.now());
-        ChatDto chatWithDate = new ChatDto(
+        return chatList.stream()
+                .map(chat -> new ChatResponseDto(
+                        chat.chatRoomId(),
+                        chat.fromUserId(),
+                        chat.message(),
+                        chat.createdAt(),
+                        (chat.fromUserId() != null && chat.fromUserId().equals(currentUserId))
+                ))
+                .toList();
+    }
+
+    public ChatDto addMessage(ChatDto chatDto) {
+        Date now = new Date();
+        ChatDto dtoToSave = new ChatDto(
+                chatDto.chatRoomId(),
                 chatDto.fromUserId(),
-                chatDto.toUserId(),
                 chatDto.message(),
                 now
         );
-        chatRepository.save(chatWithDate);
-        return chatWithDate;
-    }
-
-    public List<ChatDto> getChatHistoryBetween(Long fromUserId, Long toUserId) {
-        return chatRepository.findByTwoUserIds(fromUserId, toUserId);
+        return chatRepository.save(dtoToSave);
     }
 
 }

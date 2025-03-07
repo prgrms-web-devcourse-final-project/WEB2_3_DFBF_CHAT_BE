@@ -98,12 +98,12 @@
     }
 
     .chat-message.sent {
-      background: #dfe8ff;
+      background: #dfe8ff; /* 내가 보낸 메시지 - 파란 톤 */
       align-self: flex-end;
     }
 
     .chat-message.received {
-      background: #f3f3f3;
+      background: #f3f3f3; /* 상대 메시지 - 회색 톤 */
       align-self: flex-start;
     }
   </style>
@@ -138,8 +138,8 @@
 
 <script>
   let accessToken = "YOUR_JWT_TOKEN_HERE";
-  let myUserId = 2;
-  let targetUserId = 1;
+  let chatRoomId = "room-123";
+  let myUserId = 2; // 본인 사용자 ID
 
   let stompClient = null;
 
@@ -147,52 +147,65 @@
   function connect() {
     const socket = new SockJS('http://localhost:8080/ws-chat');
     stompClient = Stomp.over(socket);
-    stompClient.connect({/*"Authorization": "Bearer " + accessToken*/}, function(frame) {
-      console.log('[연결됨] ' + frame);
-      showStatusMessage('채팅 시, 서로에게 상처되지 않는 말을 사용해 주세요.');
 
-      // 1) 과거 채팅 메시지 먼저 불러오기 (REST 호출)
-      fetch(`http://localhost:8080/api/chat/history/between?fromUserId=${myUserId}&toUserId=${targetUserId}`)
-        .then(response => {
-          if (response.status === 204) {
-            console.warn('No chat history found (204 No Content)');
-            return [];
-          }
-          return response.json();
-        })
-        .then(messages => {
-          if (!Array.isArray(messages)) {
-            console.warn('No valid chat history received.');
-            return;
-          }
+    // Stomp 연결 시도
+    stompClient.connect(
+            // (요청 헤더)
+            { /* "Authorization": "Bearer " + accessToken */ },
+            // 연결 성공 시 실행될 콜백
+            function(frame) {
+              console.log('[연결됨] ' + frame);
+              showStatusMessage('채팅 시, 서로에게 상처되지 않는 말을 사용해 주세요.');
 
-          messages.forEach(msg => {
-            // ✅ `createdAt`이 존재할 때만 변환
-            const formattedDate = msg.createdAt ? new Date(msg.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '시간 없음';
+              // 1) 과거 채팅 메시지 먼저 불러오기 (REST 호출)
+              fetch(`http://localhost:8080/api/chat/history/${chatRoomId}`)
+                      .then(response => {
+                        if (response.status === 204) {
+                          console.warn('No chat history found (204 No Content)');
+                          return [];
+                        }
+                        return response.json();
+                      })
+                      .then(messages => {
+                        if (!Array.isArray(messages)) {
+                          console.warn('No valid chat history received.');
+                          return;
+                        }
 
-            // ✅ console.log() 대신 console.debug() 사용하여 필요할 때만 활성화
-            console.debug(`[CHAT] ${formattedDate} - ${msg.message}`);
+                        messages.forEach(msg => {
+                          const formattedDate = msg.createdAt
+                                  ? new Date(msg.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+                                  : '시간 없음';
+                          // 본인이 보낸 메시지인지 판별
+                          const isMine = (msg.fromUserId === myUserId);
+                          const msgStyle = isMine ? 'sent' : 'received';
 
-            // ✅ `showChatMessage`에 안전하게 데이터 전달
-            showChatMessage(`${formattedDate} - ${msg.message || '메시지 없음'}`, 'received');
-          });
-        })
-        .catch(error => console.error('Error fetching chat history:', error));
+                          console.debug(`[CHAT] ${formattedDate} - ${msg.message}`);
+                          // chatRoomId, fromUserId, etc. 있으면 필요에 맞게 사용
+                          showChatMessage(`${formattedDate} - ${msg.message || '메시지 없음'}`, msgStyle);
+                        });
+                      })
+                      .catch(error => console.error('Error fetching chat history:', error));
 
-      // 2) 내 유저 전용 큐 구독 → 1:1 메시지 받기
-      stompClient.subscribe('/queue/chat-2', function (message) {
-        const chat = JSON.parse(message.body);
-        showChatMessage(chat.message, 'received');
-      });
+              // 2) 채팅 메시지 구독 (연결된 이후에만 가능)
+              stompClient.subscribe(`/queue/chat-${chatRoomId}`, function (message) {
+                const chat = JSON.parse(message.body);
+                const isMine = (chat.fromUserId === myUserId);
+                // 보낸 사람과 내 ID가 같으면 'sent', 아니면 'received'
+                const msgStyle = isMine ? 'sent' : 'received';
+                showChatMessage(chat.message, msgStyle);
+              });
 
-      // 3) 나쁜 말 필터링 채널 구독
-      stompClient.subscribe('/topic/badword', function(message) {
-        showChatMessage('[나쁜 말 감지] ' + message.body, 'received');
-      });
+              // 3) 나쁜 말 필터링 채널 구독
+              stompClient.subscribe('/topic/badword', function(message) {
+                showChatMessage('[나쁜 말 감지] ' + message.body, 'received');
+              });
 
-      document.getElementById('connectBtn').disabled = true;
-      document.getElementById('disconnectBtn').disabled = false;
-    });
+              // 연결 버튼/해제 버튼 상태 변경
+              document.getElementById('connectBtn').disabled = true;
+              document.getElementById('disconnectBtn').disabled = false;
+            }
+    );
   }
 
   // 웹소켓 연결 해제
@@ -204,7 +217,7 @@
         document.getElementById('connectBtn').disabled = false;
         document.getElementById('disconnectBtn').disabled = true;
 
-        // ★ 연결 해제 시 채팅 영역 초기화
+        // 연결 해제 시 채팅 영역 초기화
         const chatArea = document.getElementById('chatArea');
         chatArea.innerHTML = '';
       });
@@ -219,13 +232,10 @@
     if (msg && stompClient && stompClient.connected) {
       // 서버의 /app/sendMessage 로 메시지를 보냄
       stompClient.send("/app/sendMessage", {}, JSON.stringify({
+        chatRoomId: chatRoomId,
         fromUserId: myUserId,
-        toUserId: targetUserId,
         message: msg
       }));
-
-      // 내가 보낸 메시지는 화면에 sent 타입으로 출력
-      showChatMessage(msg, 'sent');
       messageInput.value = '';
     }
   }
@@ -234,6 +244,7 @@
   function showChatMessage(message, messageType) {
     const chatArea = document.getElementById('chatArea');
     const div = document.createElement('div');
+    // 'sent' or 'received' 등을 사용해 스타일 지정
     div.className = 'chat-message ' + (messageType || '');
     div.textContent = message;
     chatArea.appendChild(div);
