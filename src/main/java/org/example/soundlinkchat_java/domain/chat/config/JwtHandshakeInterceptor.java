@@ -31,11 +31,11 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
         if (request instanceof ServletServerHttpRequest servletRequest) {
             HttpServletRequest httpServletRequest = servletRequest.getServletRequest();
-            String accessToken = jwtProvider.resolveAccessToken(httpServletRequest);
+
+            String accessToken = httpServletRequest.getParameter("token");
             if (accessToken != null && jwtProvider.validateToken(accessToken)) {
                 Long userId = jwtProvider.getUserId(accessToken);
                 attributes.put("userId", userId);
-
                 return true;
             }
         }
