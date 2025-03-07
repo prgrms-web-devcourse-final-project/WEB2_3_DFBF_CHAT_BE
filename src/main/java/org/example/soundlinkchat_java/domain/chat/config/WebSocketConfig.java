@@ -23,13 +23,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-chat")
                 .setAllowedOriginPatterns("*")   // 실제 운영 시에는 특정 도메인으로 제한 권장
-//                .addInterceptors(new JwtHandshakeInterceptor(jwtProvider)) // 잠시 삭제
+                .addInterceptors(new JwtHandshakeInterceptor(jwtProvider)) // 잠시 삭제
                 .withSockJS();
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/app");
-        registry.enableSimpleBroker("/topic", "/queue", "/user");
+        registry.enableSimpleBroker("/topic", "/queue");
     }
 }
