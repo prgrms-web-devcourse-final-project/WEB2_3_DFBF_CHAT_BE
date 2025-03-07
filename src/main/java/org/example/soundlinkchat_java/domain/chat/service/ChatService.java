@@ -19,7 +19,6 @@ public class ChatService {
         return chatRepository.findByChatRoomId(chatRoomId);
     }
 
-    // 2) 메시지 저장
     public ChatDto addMessage(ChatDto chatDto) {
         ChatDto toSave = new ChatDto(
                 chatDto.chatRoomId(),
