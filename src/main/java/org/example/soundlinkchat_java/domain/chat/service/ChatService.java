@@ -3,7 +3,6 @@ package org.example.soundlinkchat_java.domain.chat.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.soundlinkchat_java.domain.chat.dto.ChatDto;
-import org.example.soundlinkchat_java.domain.chat.dto.ChatResponseDto;
 import org.example.soundlinkchat_java.domain.chat.repositoty.ChatRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,29 +15,19 @@ import java.util.List;
 public class ChatService {
     private final ChatRepository chatRepository;
 
-    public List<ChatResponseDto> getChatHistoryByRoomId(String chatRoomId, Long currentUserId) {
-        List<ChatDto> chatList = chatRepository.findByChatRoomId(chatRoomId);
-
-        return chatList.stream()
-                .map(chat -> new ChatResponseDto(
-                        chat.chatRoomId(),
-                        chat.fromUserId(),
-                        chat.message(),
-                        chat.createdAt(),
-                        (chat.fromUserId() != null && chat.fromUserId().equals(currentUserId))
-                ))
-                .toList();
+    public List<ChatDto> getChatHistoryByRoomId(String chatRoomId) {
+        return chatRepository.findByChatRoomId(chatRoomId);
     }
 
+    // 2) 메시지 저장
     public ChatDto addMessage(ChatDto chatDto) {
-        Date now = new Date();
-        ChatDto dtoToSave = new ChatDto(
+        ChatDto toSave = new ChatDto(
                 chatDto.chatRoomId(),
                 chatDto.fromUserId(),
                 chatDto.message(),
-                now
+                new Date()
         );
-        return chatRepository.save(dtoToSave);
+        return chatRepository.save(toSave);
     }
 
 }
