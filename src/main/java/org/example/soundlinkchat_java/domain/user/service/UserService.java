@@ -19,4 +19,6 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    // RequestUserId, ResponseUserId, Msg, CreatedAt
+    // -> ChatRoomId, RequestUserId, Msg, CreatedAt
 }

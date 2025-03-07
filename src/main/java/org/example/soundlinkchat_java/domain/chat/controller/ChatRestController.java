@@ -30,3 +30,6 @@ public class ChatRestController {
         return ResponseEntity.ok(chatHistory);
     }
 }
+
+// 8081 -> 8081 포트 데이터 말고는 다 차단 (CORS)
+// @CrossOrigin(origins = "http://localhost:63342") -> localhost:63342에서만 접근 가능

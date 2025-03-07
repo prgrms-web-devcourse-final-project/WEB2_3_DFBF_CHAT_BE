@@ -17,7 +17,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    @Operation(summary = "유저 조회", description = "유저 조회 API")
+    @Operation(summary = "유저 조회", description = "유저 조회 API (테스트용 API 입니다. 유저데이터는 8080서버로 연결해주세요!) ")
     public ResponseEntity<?> getUser(/*@AuthenticationPrincipal Long id*/) {
         return ResponseEntity.ok().body(userService.getUserDataWithoutRedis(1L));
     }
