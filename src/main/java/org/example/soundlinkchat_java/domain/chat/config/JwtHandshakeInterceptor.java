@@ -19,10 +19,12 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     @Override
-    public boolean beforeHandshake(ServerHttpRequest request,
-                                   ServerHttpResponse response,
-                                   WebSocketHandler wsHandler,
-                                   Map<String, Object> attributes) throws Exception {
+    public boolean beforeHandshake(
+            ServerHttpRequest request,
+            ServerHttpResponse response,
+            WebSocketHandler wsHandler,
+            Map<String, Object> attributes
+    ) throws Exception {
 
         String uri = request.getURI().toString();
         if (uri.contains("/ws-chat/info")) {
@@ -30,9 +32,10 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
         }
 
         if (request instanceof ServletServerHttpRequest servletRequest) {
-            HttpServletRequest httpServletRequest = servletRequest.getServletRequest();
+            HttpServletRequest httpRequest = servletRequest.getServletRequest();
 
-            String accessToken = httpServletRequest.getParameter("token");
+            String accessToken = httpRequest.getParameter("token");
+
             if (accessToken != null && jwtProvider.validateToken(accessToken)) {
                 Long userId = jwtProvider.getUserId(accessToken);
                 attributes.put("userId", userId);
