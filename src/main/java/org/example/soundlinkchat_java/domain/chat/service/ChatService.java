@@ -22,15 +22,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final JwtProvider jwtProvider;
 
-    public ResponseEntity<List<ChatResponseDto>> getChatHistoryResponse(String chatRoomId, HttpServletRequest request) {
-        String token = jwtProvider.resolveAccessToken(request);
-
-        if (token == null || !jwtProvider.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        Long currentUserId = jwtProvider.getUserId(token);
-
+    public ResponseEntity<?> getChatHistoryResponse(String chatRoomId, Long currentUserId) {
         List<ChatDto> chatList = chatRepository.findByChatRoomId(chatRoomId);
 
         List<ChatResponseDto> chatHistory = chatList.stream()

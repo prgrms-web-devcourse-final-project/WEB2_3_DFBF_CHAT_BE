@@ -1,4 +1,4 @@
-package org.example.soundlinkchat_java.domain.chat.config;
+package org.example.soundlinkchat_java.global.config;
 
 import lombok.RequiredArgsConstructor;
 import org.example.soundlinkchat_java.global.auth.JwtAuthenticationFilter;
