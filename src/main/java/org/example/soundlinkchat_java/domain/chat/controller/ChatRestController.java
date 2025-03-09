@@ -10,15 +10,15 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/chat")
+@RequestMapping("/chat")
 public class ChatRestController {
     private final ChatService chatService;
 
-    @GetMapping("/history/{chatRoomId}")
+    @GetMapping("/history")
     @Operation(summary = "채팅방 내 채팅 내역", description = "채팅 그 자체를 가져오는 API (배포서버에서만 작동)")
     public ResponseResult getChatHistory(
             @AuthenticationPrincipal Long userId,
-            @PathVariable String chatRoomId
+            @RequestParam("chatRoomId") String chatRoomId
     ) {
         return chatService.getChatHistoryResponse(chatRoomId, userId);
     }
