@@ -35,4 +35,21 @@ public class ChatController {
 
         return chatService.addMessage(safeDto);
     }
+
+    @MessageMapping("/extendSession")
+    public void extendSession(Message<?> message) {
+        Map<String, Object> sessionAttrs = (Map<String, Object>) message.getHeaders().get("simpSessionAttributes");
+        if (sessionAttrs == null) return;
+
+        // 현재 만료 시점
+        Long expireTime = (Long) sessionAttrs.get("expireTime");
+        if (expireTime == null) return;
+
+        // 10분 연장
+        long extendMs = 10 * 60 * 1000L;
+        long newExpireTime = expireTime + extendMs;
+
+        sessionAttrs.put("expireTime", newExpireTime);
+        log.info("[WebSocket] 10분 추가 연장 되었습니다. expireTime={}", newExpireTime);
+    }
 }
