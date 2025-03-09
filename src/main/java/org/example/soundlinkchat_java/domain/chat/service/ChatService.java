@@ -1,9 +1,15 @@
 package org.example.soundlinkchat_java.domain.chat.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.soundlinkchat_java.domain.chat.dto.ChatDto;
+import org.example.soundlinkchat_java.domain.chat.dto.ChatResponseDto;
 import org.example.soundlinkchat_java.domain.chat.repositoty.ChatRepository;
+import org.example.soundlinkchat_java.domain.user.service.UserService;
+import org.example.soundlinkchat_java.global.auth.JwtProvider;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -14,9 +20,36 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatService {
     private final ChatRepository chatRepository;
+    private final JwtProvider jwtProvider;
 
-    public List<ChatDto> getChatHistoryByRoomId(String chatRoomId) {
-        return chatRepository.findByChatRoomId(chatRoomId);
+    public ResponseEntity<List<ChatResponseDto>> getChatHistoryResponse(String chatRoomId, HttpServletRequest request) {
+        String token = jwtProvider.resolveAccessToken(request);
+
+        if (token == null || !jwtProvider.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Long currentUserId = jwtProvider.getUserId(token);
+
+        List<ChatDto> chatList = chatRepository.findByChatRoomId(chatRoomId);
+
+        List<ChatResponseDto> chatHistory = chatList.stream()
+                .map(chat -> {
+                    boolean isMine = (chat.fromUserId() != null && chat.fromUserId().equals(currentUserId));
+                    return new ChatResponseDto(
+                            chat.chatRoomId(),
+                            chat.fromUserId(),
+                            chat.message(),
+                            chat.createdAt(),
+                            isMine
+                    );
+                })
+                .toList();
+
+        if (chatHistory.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(chatHistory);
     }
 
     public ChatDto addMessage(ChatDto chatDto) {

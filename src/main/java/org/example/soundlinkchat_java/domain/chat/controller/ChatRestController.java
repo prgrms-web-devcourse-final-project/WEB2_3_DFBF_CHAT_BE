@@ -25,31 +25,7 @@ public class ChatRestController {
             @PathVariable String chatRoomId,
             HttpServletRequest request
     ) {
-        String token = jwtProvider.resolveAccessToken(request);
-        if (token == null || !jwtProvider.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        Long currentUserId = jwtProvider.getUserId(token);
-
-        List<ChatDto> chatList = chatService.getChatHistoryByRoomId(chatRoomId);
-
-        List<ChatResponseDto> chatHistory = chatList.stream()
-                .map(chat -> {
-                    boolean isMine = (chat.fromUserId() != null && chat.fromUserId().equals(currentUserId));
-                    return new ChatResponseDto(
-                            chat.chatRoomId(),
-                            chat.fromUserId(),
-                            chat.message(),
-                            chat.createdAt(),
-                            isMine
-                    );
-                })
-                .toList();
-
-        if (chatHistory.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(chatHistory);
+        return chatService.getChatHistoryByRoomId(chatRoomId, request);
     }
 }
 
