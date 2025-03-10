@@ -46,13 +46,12 @@ public class ChatController {
             log.error("Failed to send to Kafka", e);
         }
 
-        boolean isMine = (savedDto.fromUserId() != null && savedDto.fromUserId().equals(userId));
         return new ChatResponseDto(
                 savedDto.chatRoomId(),
                 savedDto.fromUserId(),
                 savedDto.message(),
                 savedDto.createdAt(),
-                isMine
+                true
         );
     }
 
