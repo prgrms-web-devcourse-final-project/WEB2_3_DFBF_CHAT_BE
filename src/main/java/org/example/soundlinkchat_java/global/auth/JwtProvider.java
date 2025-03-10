@@ -7,7 +7,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -17,22 +17,23 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Component
+@RequiredArgsConstructor
 public class JwtProvider {
 
-    // 토큰(Access,Refresh) 만료시간(ms)
+    private final RedisTemplate<String, String> redisTemplate;
+
+    // 토큰(Access) 만료시간(ms)
     @Value("${ACCESS_TOKEN_EXPIRATION_TIME}")
     private long ACCESS_EXPIRATION_TIME;
 
+    // 토큰(Refresh) 만료시간(ms)
     @Value("${REFRESH_TOKEN_EXPIRATION_TIME}")
     private long REFRESH_EXPIRATION_TIME;
 
-    //시크릿 키
-    private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    // 시크릿 키
+    private final SecretKey SECRET_KEY = Keys.hmacShaKeyFor("ee7d4dcf88086125155386d999b3a2258d5c55671a390e608f49a2db31efc6e0".getBytes());
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
-
-    //Access 토큰
+    // Access 토큰
     public String createAccessToken(long userId) {
         Claims claims = Jwts.claims().setSubject(String.valueOf(userId));
         Date now = new Date();
