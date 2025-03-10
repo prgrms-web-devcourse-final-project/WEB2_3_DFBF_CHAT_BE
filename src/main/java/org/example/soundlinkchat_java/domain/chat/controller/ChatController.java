@@ -3,6 +3,7 @@ package org.example.soundlinkchat_java.domain.chat.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.soundlinkchat_java.domain.chat.dto.ChatDto;
+import org.example.soundlinkchat_java.domain.chat.dto.ChatResponseDto;
 import org.example.soundlinkchat_java.domain.chat.service.ChatService;
 import org.example.soundlinkchat_java.global.annotation.ChatMessage;
 import org.springframework.messaging.Message;
@@ -20,7 +21,7 @@ public class ChatController {
 
     @MessageMapping("/sendMessage")
     @ChatMessage // AOP 가 잡아주는 어노테이션입니당.
-    public ChatDto sendMessage(Message<?> message, ChatDto incomingDto) {
+    public ChatResponseDto sendMessage(Message<?> message, ChatDto incomingDto) {
         Map<String, Object> sessionAttrs =
                 (Map<String, Object>) message.getHeaders().get("simpSessionAttributes");
         Long userId = (Long) sessionAttrs.get("userId");
@@ -33,7 +34,16 @@ public class ChatController {
         );
         log.info("[WebSocket] Received message: chatRoomId={}, userId={}", safeDto.chatRoomId(), userId);
 
-        return chatService.addMessage(safeDto);
+        ChatDto savedDto = chatService.addMessage(safeDto);
+
+        boolean isMine = (savedDto.fromUserId() != null && savedDto.fromUserId().equals(userId));
+        return new ChatResponseDto(
+                savedDto.chatRoomId(),
+                savedDto.fromUserId(),
+                savedDto.message(),
+                savedDto.createdAt(),
+                isMine
+        );
     }
 
     @MessageMapping("/extendSession")
