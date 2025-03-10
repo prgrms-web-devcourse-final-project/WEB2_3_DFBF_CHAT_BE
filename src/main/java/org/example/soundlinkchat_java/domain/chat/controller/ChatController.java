@@ -9,6 +9,7 @@ import org.example.soundlinkchat_java.domain.chat.service.ChatService;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
 import java.util.Map;
@@ -24,6 +25,7 @@ public class ChatController {
 
 
     @MessageMapping("/sendMessage")
+    @SendToUser("/queue/mychat")
     public ChatResponseDto sendMessage(Message<?> message, ChatDto incomingDto) {
         Map<String, Object> sessionAttrs =
                 (Map<String, Object>) message.getHeaders().get("simpSessionAttributes");
