@@ -1,10 +1,12 @@
 package org.example.soundlinkchat_java.domain.chat.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.soundlinkchat_java.domain.chat.dto.ChatDto;
+import org.example.soundlinkchat_java.domain.chat.dto.ChatResponseDto;
 import org.example.soundlinkchat_java.domain.chat.service.ChatService;
-import org.example.soundlinkchat_java.global.annotation.ChatMessage;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
@@ -17,10 +19,12 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatService chatService;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+
 
     @MessageMapping("/sendMessage")
-    @ChatMessage // AOP 가 잡아주는 어노테이션입니당.
-    public ChatDto sendMessage(Message<?> message, ChatDto incomingDto) {
+    public ChatResponseDto sendMessage(Message<?> message, ChatDto incomingDto) {
         Map<String, Object> sessionAttrs =
                 (Map<String, Object>) message.getHeaders().get("simpSessionAttributes");
         Long userId = (Long) sessionAttrs.get("userId");
@@ -33,7 +37,23 @@ public class ChatController {
         );
         log.info("[WebSocket] Received message: chatRoomId={}, userId={}", safeDto.chatRoomId(), userId);
 
-        return chatService.addMessage(safeDto);
+        ChatDto savedDto = chatService.addMessage(safeDto);
+
+        try {
+            String msgJson = objectMapper.writeValueAsString(savedDto);
+            kafkaTemplate.send("chat-topic", msgJson);
+        } catch (Exception e) {
+            log.error("Failed to send to Kafka", e);
+        }
+
+        boolean isMine = (savedDto.fromUserId() != null && savedDto.fromUserId().equals(userId));
+        return new ChatResponseDto(
+                savedDto.chatRoomId(),
+                savedDto.fromUserId(),
+                savedDto.message(),
+                savedDto.createdAt(),
+                isMine
+        );
     }
 
     @MessageMapping("/extendSession")
