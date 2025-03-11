@@ -6,7 +6,6 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.example.soundlinkchat_java.domain.chat.repositoty.BadWordRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,25 +40,10 @@ public class KafkaConfig {
     @Bean
     public KStream<String, String> notificationStream(StreamsBuilder builder) {
 
-        KStream<String, String> notificationStream = builder.stream(
+        return builder.stream(
                 "chat-topic",
                 Consumed.with(Serdes.String(), Serdes.String())
         );
-
-        KStream<String, String> badWordStream = notificationStream
-                .filter((key, value) -> containsBadWord(value));
-
-        badWordStream.to("bad-word", Produced.with(Serdes.String(), Serdes.String()));
-
-        return badWordStream;
-    }
-
-    private boolean containsBadWord(String message) {
-        if (message == null) {
-            return false;
-        }
-        return BadWordRepository.BAD_WORDS.stream()
-                .anyMatch(message::contains);
     }
 
     @Bean
