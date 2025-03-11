@@ -42,11 +42,4 @@ public class ChatConsumer {
             log.error("[ChatConsumer] Failed: {}", e.getMessage());
         }
     }
-
-    @KafkaListener(topics = "bad-word", groupId = "chat-consumer-group")
-    public void consumerBadWord(String message) {
-        log.info("[나쁜말 금지] Received message: {}", message);
-
-        simpMessagingTemplate.convertAndSend("/topic/badword", message);
-    }
 }
